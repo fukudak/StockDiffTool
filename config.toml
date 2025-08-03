@@ -1,0 +1,12 @@
+[theme]
+primaryColor = "#4b6cb7"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+
+[server]
+maxUploadSize = 50
+maxMessageSize = 50
+
+[browser]
+gatherUsageStats = false
