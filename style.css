@@ -1,0 +1,222 @@
+<style>
+/* ベーススタイル */
+.stButton > button { 
+    border-radius: 8px; 
+    font-weight: bold; 
+}
+
+.main > div {
+    padding-top: 1rem;
+}
+
+.stMetric {
+    background-color: #f0f2f6;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+/* ヘッダースタイル */
+.header-container {
+    background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%); 
+    padding: 0.8rem; 
+    border-radius: 8px; 
+    margin-bottom: 1rem;
+}
+
+.header-title {
+    color: white; 
+    text-align: center; 
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.header-subtitle {
+    color: #E0E0E0; 
+    text-align: center; 
+    margin: 0.3rem 0 0 0; 
+    font-size: 0.9rem;
+}
+
+/* ファイル情報スタイル */
+.file-info {
+    background-color: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid #4b6cb7;
+}
+
+.file-info strong {
+    color: #4b6cb7;
+}
+
+/* ページングコントロール */
+.pagination-container {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    border: 1px solid #dee2e6;
+}
+
+.pagination-info {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pagination-buttons .stButton {
+    flex: 1;
+    min-width: 80px;
+}
+
+/* レスポンシブデザイン */
+@media (max-width: 768px) {
+    /* タブレット以下 */
+    .header-title {
+        font-size: 1.2rem;
+    }
+    
+    .header-subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .pagination-container {
+        padding: 0.75rem;
+    }
+    
+    .pagination-info {
+        font-size: 0.9rem;
+        text-align: center;
+    }
+    
+    /* データフレームのスクロール */
+    .stDataFrame {
+        overflow-x: auto;
+    }
+    
+    /* ボタンサイズ調整 */
+    .stButton > button {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    /* スマートフォン */
+    .header-container {
+        padding: 0.6rem;
+        margin-bottom: 0.8rem;
+    }
+    
+    .header-title {
+        font-size: 1rem;
+    }
+    
+    .header-subtitle {
+        font-size: 0.75rem;
+    }
+    
+    .file-info {
+        padding: 0.4rem;
+        font-size: 0.85rem;
+    }
+    
+    .pagination-container {
+        padding: 0.5rem;
+    }
+    
+    .pagination-info {
+        font-size: 0.8rem;
+        margin-bottom: 0.8rem;
+    }
+    
+    .pagination-buttons {
+        gap: 0.3rem;
+    }
+    
+    .pagination-buttons .stButton {
+        min-width: 60px;
+    }
+    
+    .stButton > button {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+    }
+    
+    /* セレクトボックスの調整 */
+    .stSelectbox {
+        font-size: 0.85rem;
+    }
+    
+    /* メトリクスの調整 */
+    .stMetric {
+        padding: 0.3rem;
+    }
+    
+    .stMetric [data-testid="metric-container"] {
+        font-size: 0.8rem;
+    }
+    
+    /* サイドバーの調整 */
+    .css-1d391kg {
+        padding-top: 1rem;
+    }
+}
+
+/* 横向きスマートフォン */
+@media (max-width: 768px) and (orientation: landscape) {
+    .header-title {
+        font-size: 1.1rem;
+    }
+    
+    .pagination-container {
+        padding: 0.6rem;
+    }
+}
+
+/* データテーブルのレスポンシブ対応 */
+.dataframe-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+    .dataframe-container {
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+}
+
+/* タブの調整 */
+@media (max-width: 480px) {
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.2rem;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.5rem;
+    }
+}
+
+/* アップロードエリアの調整 */
+@media (max-width: 768px) {
+    .stFileUploader {
+        margin-bottom: 1rem;
+    }
+}
+
+/* エキスパンダーの調整 */
+@media (max-width: 480px) {
+    .streamlit-expanderHeader {
+        font-size: 0.9rem;
+    }
+}
+</style>

@@ -122,6 +122,41 @@ class SessionManager:
             cls.FILE2_SHEET: file2_sheet
         })
 
+class StyleLoader:
+    """スタイル読み込みクラス"""
+    
+    @staticmethod
+    def load_styles():
+        """外部CSSファイルを読み込み"""
+        try:
+            with open('style.css', 'r', encoding='utf-8') as f:
+                st.markdown(f.read(), unsafe_allow_html=True)
+        except FileNotFoundError:
+            # フォールバック用の基本スタイル
+            st.markdown("""
+            <style>
+            .stButton > button { 
+                border-radius: 8px; 
+                font-weight: bold; 
+            }
+            .main > div {
+                padding-top: 1rem;
+            }
+            @media (max-width: 768px) {
+                .stButton > button {
+                    font-size: 0.9rem;
+                    padding: 0.5rem 1rem;
+                }
+            }
+            @media (max-width: 480px) {
+                .stButton > button {
+                    font-size: 0.8rem;
+                    padding: 0.4rem 0.8rem;
+                }
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
 class FileUtils:
     """ファイル関連ユーティリティ"""
     
@@ -174,7 +209,9 @@ class FileUtils:
                 
                 # データプレビュー
                 with st.expander("📊 データプレビュー"):
+                    st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
                     st.dataframe(data.head(10), use_container_width=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
                 
                 return data, uploaded_file.name, sheet_name
             
@@ -373,9 +410,9 @@ class UIRenderer:
     def render_header(comparison_completed: bool):
         """ヘッダー表示"""
         st.markdown("""
-        <div style="background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem;">
-            <h2 style="color: white; text-align: center; margin: 0;">📊 在庫差分比較ツール</h2>
-            <p style="color: #E0E0E0; text-align: center; margin: 0.3rem 0 0 0; font-size: 0.9rem;">Excelファイルの在庫データを比較し、差分を可視化するツールです。</p>
+        <div class="header-container">
+            <h2 class="header-title">📊 在庫差分比較ツール</h2>
+            <p class="header-subtitle">Excelファイルの在庫データを比較し、差分を可視化するツールです。</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -387,11 +424,19 @@ class UIRenderer:
         ):
             col1, col2 = st.columns(2)
             with col1:
-                st.markdown(f"**📁 ファイル1:** {st.session_state[SessionManager.FILE1_NAME]}")
-                st.markdown(f"**📄 シート:** {st.session_state[SessionManager.FILE1_SHEET]}")
+                st.markdown(f"""
+                <div class="file-info">
+                    <strong>📁 ファイル1:</strong> {st.session_state[SessionManager.FILE1_NAME]}<br>
+                    <strong>📄 シート:</strong> {st.session_state[SessionManager.FILE1_SHEET]}
+                </div>
+                """, unsafe_allow_html=True)
             with col2:
-                st.markdown(f"**📁 ファイル2:** {st.session_state[SessionManager.FILE2_NAME]}")
-                st.markdown(f"**📄 シート:** {st.session_state[SessionManager.FILE2_SHEET]}")
+                st.markdown(f"""
+                <div class="file-info">
+                    <strong>📁 ファイル2:</strong> {st.session_state[SessionManager.FILE2_NAME]}<br>
+                    <strong>📄 シート:</strong> {st.session_state[SessionManager.FILE2_SHEET]}
+                </div>
+                """, unsafe_allow_html=True)
     
     @staticmethod
     def render_sidebar(comparison_completed: bool) -> None:
@@ -450,16 +495,20 @@ class UIRenderer:
         total_pages, max_page = PaginationUtils.get_page_info(total_items)
         start_item, end_item = PaginationUtils.get_page_range_info(total_items, current_page)
         
+        st.markdown('<div class="pagination-container">', unsafe_allow_html=True)
+        
         # ページング情報の表示
-        col1, col2, col3 = st.columns([3, 1, 1])
+        st.markdown(f"""
+        <div class="pagination-info">
+            <strong>表示範囲:</strong> {start_item:,} - {end_item:,} 件 / 全 {total_items:,} 件<br>
+            <strong>ページ:</strong> {current_page} / {total_pages}
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # ページ選択とナビゲーション
+        col1, col2 = st.columns([1, 3])
         
         with col1:
-            st.markdown(f"**表示範囲:** {start_item:,} - {end_item:,} 件 / 全 {total_items:,} 件")
-        
-        with col2:
-            st.markdown(f"**ページ:** {current_page} / {total_pages}")
-        
-        with col3:
             # ページ選択
             new_page = st.selectbox(
                 "ページ選択",
@@ -469,24 +518,30 @@ class UIRenderer:
                 label_visibility="collapsed"
             )
         
-        # ナビゲーションボタン
-        nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns(5)
+        with col2:
+            st.markdown('<div class="pagination-buttons">', unsafe_allow_html=True)
+            # ナビゲーションボタン
+            nav_col1, nav_col2, nav_col3, nav_col4 = st.columns(4)
+            
+            with nav_col1:
+                if st.button("⏮️ 最初", key=f"first_{tab_key}", disabled=(current_page == 1)):
+                    new_page = 1
+            
+            with nav_col2:
+                if st.button("◀️ 前", key=f"prev_{tab_key}", disabled=(current_page == 1)):
+                    new_page = max(1, current_page - 1)
+            
+            with nav_col3:
+                if st.button("▶️ 次", key=f"next_{tab_key}", disabled=(current_page == total_pages)):
+                    new_page = min(total_pages, current_page + 1)
+            
+            with nav_col4:
+                if st.button("⏭️ 最後", key=f"last_{tab_key}", disabled=(current_page == total_pages)):
+                    new_page = total_pages
+            
+            st.markdown('</div>', unsafe_allow_html=True)
         
-        with nav_col1:
-            if st.button("⏮️ 最初", key=f"first_{tab_key}", disabled=(current_page == 1)):
-                new_page = 1
-        
-        with nav_col2:
-            if st.button("◀️ 前", key=f"prev_{tab_key}", disabled=(current_page == 1)):
-                new_page = max(1, current_page - 1)
-        
-        with nav_col4:
-            if st.button("▶️ 次", key=f"next_{tab_key}", disabled=(current_page == total_pages)):
-                new_page = min(total_pages, current_page + 1)
-        
-        with nav_col5:
-            if st.button("⏭️ 最後", key=f"last_{tab_key}", disabled=(current_page == total_pages)):
-                new_page = total_pages
+        st.markdown('</div>', unsafe_allow_html=True)
         
         return new_page
     
@@ -501,11 +556,11 @@ class UIRenderer:
         
         # タブ設定
         tab_configs = [
-            (f"🔍 全てのアイテム ({summary.total_items:,}件)", "all"),
-            (f"➕ 追加 ({summary.added:,}件)", "added"),
-            (f"➖ 削除 ({summary.deleted:,}件)", "deleted"),
-            (f"🔄 在庫変更 ({summary.modified:,}件)", "modified"),
-            (f"✅ 変更なし ({summary.unchanged:,}件)", "unchanged")
+            (f"🔍 全て ({summary.total_items:,})", "all"),
+            (f"➕ 追加 ({summary.added:,})", "added"),
+            (f"➖ 削除 ({summary.deleted:,})", "deleted"),
+            (f"🔄 変更 ({summary.modified:,})", "modified"),
+            (f"✅ 同じ ({summary.unchanged:,})", "unchanged")
         ]
         
         tabs = st.tabs([config[0] for config in tab_configs])
@@ -564,12 +619,16 @@ class UIRenderer:
                     display_data.append(row)
                 
                 df = pd.DataFrame(display_data)
+                
+                # レスポンシブ対応のデータフレーム表示
+                st.markdown('<div class="dataframe-container">', unsafe_allow_html=True)
                 st.dataframe(
                     df, 
                     use_container_width=True, 
                     hide_index=True, 
                     height=min(600, len(df) * 35 + 38)
                 )
+                st.markdown('</div>', unsafe_allow_html=True)
                 
                 # 現在の表示情報
                 start_item, end_item = PaginationUtils.get_page_range_info(len(filtered_items), current_page)
@@ -621,28 +680,14 @@ class InventoryComparisonApp:
     def _setup_page(self):
         """ページ設定"""
         st.set_page_config(
-            page_title="在庫差分比較ツール v6.1",
+            page_title="在庫差分比較ツール v6.2",
             page_icon="📊",
-            layout="wide"
+            layout="wide",
+            initial_sidebar_state="auto"
         )
         
-        # カスタムCSS
-        st.markdown("""
-        <style>
-        .stButton>button { 
-            border-radius: 8px; 
-            font-weight: bold; 
-        }
-        .main > div {
-            padding-top: 1rem;
-        }
-        .stMetric {
-            background-color: #f0f2f6;
-            padding: 0.5rem;
-            border-radius: 4px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+        # スタイル読み込み
+        StyleLoader.load_styles()
     
     def _handle_comparison_execution(self, data1: pd.DataFrame, data2: pd.DataFrame, 
                                    file1_name: str, file1_sheet: str, 
