@@ -279,7 +279,7 @@ class InventoryComparator:
             return False, f"必須キー列が不足: {missing_keys}"
         
         if self.stock_column not in data1.columns:
-            return False, f"在庫列 '{self.stock_column}' が見つかりません"
+            return False, f"比較列 '{self.stock_column}' が見つかりません"
         
         return True, "OK"
     
@@ -451,7 +451,7 @@ class UIRenderer:
         start_item, end_item = PaginationUtils.get_page_range_info(total_items, current_page)
         
         # ページング情報の表示
-        col1, col2, col3 = st.columns([2, 1, 2])
+        col1, col2, col3 = st.columns([3, 1, 1])
         
         with col1:
             st.markdown(f"**表示範囲:** {start_item:,} - {end_item:,} 件 / 全 {total_items:,} 件")
@@ -604,7 +604,9 @@ class CSVExporter:
         
         df = pd.DataFrame(export_data)
         encoding = Config.ENCODING_MAP.get(encoding_choice, "utf-8-sig")
-        return df.to_csv(index=False).encode(encoding)
+        
+        # CSVを"で囲うように設定
+        return df.to_csv(index=False, quoting=1).encode(encoding)
 
 # =============================================================================
 # メインアプリケーション
