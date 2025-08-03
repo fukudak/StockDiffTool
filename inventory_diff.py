@@ -216,7 +216,17 @@ def format_stock_display(item: ComparisonItem) -> Tuple[str, str, str]:
     else:  # modified, unchanged
         stock1_display = item.stock1_display if item.stock1_display == "●" else f"{item.stock1:.0f}"
         stock2_display = item.stock2_display if item.stock2_display == "●" else f"{item.stock2:.0f}"
-        stock_change_display = "" if (item.stock1_display == "●" or item.stock2_display == "●") else f"{item.stock_change:+.0f}"
+        
+        # 在庫変化の表示（減少時は赤文字）
+        if item.stock1_display == "●" or item.stock2_display == "●":
+            stock_change_display = ""
+        else:
+            change_value = f"{item.stock_change:+.0f}"
+            if item.stock_change < 0:
+                # 減少時は赤文字でHTMLタグを追加
+                stock_change_display = f'<span style="color: red;">{change_value}</span>'
+            else:
+                stock_change_display = change_value
     
     return stock1_display, stock2_display, stock_change_display
 
@@ -422,7 +432,16 @@ def create_csv_data(items: List[ComparisonItem], columns: List[str], encoding_ch
     
     export_data = []
     for item in items:
-        stock1_display, stock2_display, stock_change_display = format_stock_display(item)
+        # CSV用は赤文字HTMLタグを除去
+        stock1_display, stock2_display, stock_change_display_html = format_stock_display(item)
+        
+        # HTMLタグを除去してプレーンテキストに
+        if '<span' in stock_change_display_html:
+            # HTMLタグを除去
+            import re
+            stock_change_display = re.sub(r'<[^>]+>', '', stock_change_display_html)
+        else:
+            stock_change_display = stock_change_display_html
         
         row = {
             '変更タイプ': CONFIG.TYPE_EXPORT_MAP[item.type],
@@ -506,41 +525,6 @@ def inject_responsive_css():
         font-size: clamp(0.8rem, 2.5vw, 0.9rem);
     }
     
-    /* メトリクスカード */
-    .metrics-container {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .metric-card {
-        background: white;
-        border: 2px solid #e1e5e9;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-        transition: transform 0.2s ease;
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .metric-value {
-        font-size: clamp(1.5rem, 4vw, 2rem);
-        font-weight: bold;
-        color: #2c3e50;
-        margin: 0;
-    }
-    
-    .metric-label {
-        font-size: clamp(0.8rem, 2.5vw, 0.9rem);
-        color: #7f8c8d;
-        margin: 0.5rem 0 0 0;
-    }
-    
     /* ページネーション */
     .pagination-container {
         display: flex;
@@ -574,27 +558,9 @@ def inject_responsive_css():
             padding: 0.8rem;
         }
         
-        .metric-card {
-            padding: 0.8rem;
-        }
-        
         .pagination-container {
             flex-direction: column;
             text-align: center;
-        }
-    }
-    
-    /* タブレット最適化 */
-    @media (min-width: 769px) and (max-width: 1024px) {
-        .metrics-container {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    
-    /* デスクトップ最適化 */
-    @media (min-width: 1025px) {
-        .metrics-container {
-            grid-template-columns: repeat(4, 1fr);
         }
     }
     
@@ -602,16 +568,6 @@ def inject_responsive_css():
     @media (prefers-color-scheme: dark) {
         .file-info-card {
             background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-        }
-        
-        .metric-card {
-            background-color: #2d3748;
-            border-color: #4a5568;
-            color: #e2e8f0;
-        }
-        
-        .metric-value {
-            color: #e2e8f0;
         }
         
         .pagination-container {
@@ -675,45 +631,9 @@ def render_header(comparison_completed: bool):
                 </div>
                 """, unsafe_allow_html=True)
 
-def render_summary_metrics(summary: ComparisonSummary):
-    """サマリーメトリクス表示"""
-    st.markdown(f"""
-    <div class="metrics-container">
-        <div class="metric-card">
-            <div class="metric-value">{summary.added:,}</div>
-            <div class="metric-label">➕ 追加</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value">{summary.deleted:,}</div>
-            <div class="metric-label">➖ 削除</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value">{summary.modified:,}</div>
-            <div class="metric-label">🔄 在庫変更</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-value">{summary.unchanged:,}</div>
-            <div class="metric-label">✅ 変更なし</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
 def render_sidebar(comparison_completed: bool):
     """サイドバー表示"""
     with st.sidebar:
-        # デバイスタイプ選択（開発用）
-        st.markdown("### 📱 表示モード")
-        device_type = st.selectbox(
-            "デバイスタイプ",
-            ["desktop", "tablet", "mobile"],
-            index=["desktop", "tablet", "mobile"].index(st.session_state.get('device_type', 'desktop')),
-            help="表示を確認するデバイスタイプを選択"
-        )
-        if device_type != st.session_state.get('device_type'):
-            st.session_state.device_type = device_type
-            st.rerun()
-        
-        st.markdown("---")
         st.markdown("### ⚙️ 設定情報")
         
         with st.expander("比較設定", expanded=False):
@@ -850,9 +770,6 @@ def render_results(items: List[ComparisonItem], columns: List[str], summary: Com
     
     st.markdown("## 📋 比較結果")
     
-    # サマリーメトリクス表示
-    render_summary_metrics(summary)
-    
     # タブ設定
     tab_configs = [
         (f"🔍 全て ({summary.total_items:,})", "all"),
@@ -923,6 +840,7 @@ def render_results(items: List[ComparisonItem], columns: List[str], summary: Com
             device_type = get_device_type()
             height = 400 if device_type == 'mobile' else min(600, len(df) * 35 + 38)
             
+            # HTMLを許可してデータフレームを表示
             st.dataframe(
                 df, 
                 use_container_width=True, 
@@ -942,7 +860,7 @@ def render_results(items: List[ComparisonItem], columns: List[str], summary: Com
 def setup_page():
     """ページ設定"""
     st.set_page_config(
-        page_title="在庫差分比較ツール v7.1 (Refactored)",
+        page_title="在庫差分比較ツール",
         page_icon="📊",
         layout="wide",
         initial_sidebar_state="expanded"
