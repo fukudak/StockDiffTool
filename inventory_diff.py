@@ -584,7 +584,7 @@ def render_header(comparison_completed: bool):
             # モバイルでは縦並び
             st.markdown(f"""
             <div class="file-info-card">
-                <h4>📁 ファイル1（比較元）</h4>
+                <h4>📁 比較元</h4>
                 <p><strong>ファイル名:</strong> {st.session_state[SessionState.FILE1_NAME]}</p>
                 <p><strong>シート:</strong> {st.session_state[SessionState.FILE1_SHEET]}</p>
             </div>
@@ -592,7 +592,7 @@ def render_header(comparison_completed: bool):
             
             st.markdown(f"""
             <div class="file-info-card">
-                <h4>📁 ファイル2（比較先）</h4>
+                <h4>📁 比較先</h4>
                 <p><strong>ファイル名:</strong> {st.session_state[SessionState.FILE2_NAME]}</p>
                 <p><strong>シート:</strong> {st.session_state[SessionState.FILE2_SHEET]}</p>
             </div>
@@ -655,13 +655,13 @@ def render_file_upload_section() -> Tuple[Optional[pd.DataFrame], Optional[pd.Da
     
     if device_type == 'mobile':
         # モバイルでは縦並び
-        st.subheader("📁 ファイル1（比較元）")
+        st.subheader("📁 比較元")
         file1 = st.file_uploader("Excelファイル1", type=['xlsx', 'xls'], key="file1")
         data1, file1_name, file1_sheet = load_excel_file(file1, "file1") if file1 else (None, "", "")
         
         st.markdown("---")
         
-        st.subheader("📁 ファイル2（比較先）")
+        st.subheader("📁 比較先")
         file2 = st.file_uploader("Excelファイル2", type=['xlsx', 'xls'], key="file2")
         data2, file2_name, file2_sheet = load_excel_file(file2, "file2") if file2 else (None, "", "")
     else:
