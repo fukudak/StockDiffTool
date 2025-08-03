@@ -217,16 +217,11 @@ def format_stock_display(item: ComparisonItem) -> Tuple[str, str, str]:
         stock1_display = item.stock1_display if item.stock1_display == "●" else f"{item.stock1:.0f}"
         stock2_display = item.stock2_display if item.stock2_display == "●" else f"{item.stock2:.0f}"
         
-        # 在庫変化の表示（減少時は赤文字）
+        # 在庫変化の表示
         if item.stock1_display == "●" or item.stock2_display == "●":
             stock_change_display = ""
         else:
-            change_value = f"{item.stock_change:+.0f}"
-            if item.stock_change < 0:
-                # 減少時は赤文字
-                stock_change_display = f'<span style="color: red;">{change_value}</span>'
-            else:
-                stock_change_display = change_value
+            stock_change_display = f"{item.stock_change:+.0f}"
     
     return stock1_display, stock2_display, stock_change_display
 
@@ -432,16 +427,7 @@ def create_csv_data(items: List[ComparisonItem], columns: List[str], encoding_ch
     
     export_data = []
     for item in items:
-        # CSV用は赤文字HTMLタグを除去
-        stock1_display, stock2_display, stock_change_display_html = format_stock_display(item)
-        
-        # HTMLタグを除去してプレーンテキストに
-        if '<span' in stock_change_display_html:
-            # HTMLタグを除去
-            import re
-            stock_change_display = re.sub(r'<[^>]+>', '', stock_change_display_html)
-        else:
-            stock_change_display = stock_change_display_html
+        stock1_display, stock2_display, stock_change_display = format_stock_display(item)
         
         row = {
             '変更タイプ': CONFIG.TYPE_EXPORT_MAP[item.type],
@@ -840,9 +826,17 @@ def render_results(items: List[ComparisonItem], columns: List[str], summary: Com
             device_type = get_device_type()
             height = 400 if device_type == 'mobile' else min(600, len(df) * 35 + 38)
             
-            # HTMLを許可してデータフレームを表示
+            # スタイル適用したDataFrameを表示
+            def highlight_negative_change(val):
+                """在庫変化が負の値の場合に赤色にする"""
+                if isinstance(val, str) and val.startswith('-'):
+                    return 'color: red'
+                return ''
+            
+            styled_df = df.style.applymap(highlight_negative_change, subset=['在庫変化'])
+            
             st.dataframe(
-                df, 
+                styled_df, 
                 use_container_width=True, 
                 hide_index=True, 
                 height=height
