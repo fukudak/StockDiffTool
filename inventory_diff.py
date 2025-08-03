@@ -422,21 +422,6 @@ class UIRenderer:
         
         st.markdown("## 📋 比較結果")
         
-        # サマリー表示
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            st.metric("📊 全アイテム", f"{summary.total_items:,}")
-        with col2:
-            st.metric("➕ 追加", f"{summary.added:,}")
-        with col3:
-            st.metric("➖ 削除", f"{summary.deleted:,}")
-        with col4:
-            st.metric("🔄 在庫変更", f"{summary.modified:,}")
-        with col5:
-            st.metric("✅ 変更なし", f"{summary.unchanged:,}")
-        
-        st.markdown("---")
-        
         # タブ設定
         tab_configs = [
             (f"🔍 全てのアイテム ({summary.total_items:,}件)", "all"),
