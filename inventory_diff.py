@@ -5,6 +5,7 @@ import logging
 from typing import Dict, List, Tuple, Optional, Any
 import hashlib
 from dataclasses import dataclass
+import math
 
 # ログ設定
 logging.basicConfig(level=logging.INFO)
@@ -24,6 +25,9 @@ class Config:
     # ファイル制限
     MAX_FILE_SIZE_MB = 50
     MAX_DATA_ROWS = 100000
+    
+    # ページング設定
+    ITEMS_PER_PAGE = 100
     
     # UI設定
     DANGEROUS_CHARS = ['<', '>', ':', '"', '|', '?', '*', '\\', '/']
@@ -227,6 +231,30 @@ class StockUtils:
         
         return stock1_display, stock2_display, stock_change_display
 
+class PaginationUtils:
+    """ページング関連ユーティリティ"""
+    
+    @staticmethod
+    def get_page_info(total_items: int, items_per_page: int = Config.ITEMS_PER_PAGE) -> Tuple[int, int]:
+        """総ページ数と最大ページ番号を取得"""
+        total_pages = math.ceil(total_items / items_per_page) if total_items > 0 else 1
+        max_page = max(1, total_pages)
+        return total_pages, max_page
+    
+    @staticmethod
+    def get_page_items(items: List[Any], page: int, items_per_page: int = Config.ITEMS_PER_PAGE) -> List[Any]:
+        """指定ページのアイテムを取得"""
+        start_idx = (page - 1) * items_per_page
+        end_idx = start_idx + items_per_page
+        return items[start_idx:end_idx]
+    
+    @staticmethod
+    def get_page_range_info(total_items: int, page: int, items_per_page: int = Config.ITEMS_PER_PAGE) -> Tuple[int, int]:
+        """現在ページの表示範囲を取得"""
+        start_item = (page - 1) * items_per_page + 1
+        end_item = min(page * items_per_page, total_items)
+        return start_item, end_item
+
 # =============================================================================
 # コアビジネスロジック
 # =============================================================================
@@ -414,6 +442,55 @@ class UIRenderer:
         return data1, data2, file1_name, file1_sheet, file2_name, file2_sheet
     
     @staticmethod
+    def render_pagination_controls(total_items: int, current_page: int, tab_key: str) -> int:
+        """ページング制御の表示"""
+        if total_items <= Config.ITEMS_PER_PAGE:
+            return current_page
+        
+        total_pages, max_page = PaginationUtils.get_page_info(total_items)
+        start_item, end_item = PaginationUtils.get_page_range_info(total_items, current_page)
+        
+        # ページング情報の表示
+        col1, col2, col3 = st.columns([2, 1, 2])
+        
+        with col1:
+            st.markdown(f"**表示範囲:** {start_item:,} - {end_item:,} 件 / 全 {total_items:,} 件")
+        
+        with col2:
+            st.markdown(f"**ページ:** {current_page} / {total_pages}")
+        
+        with col3:
+            # ページ選択
+            new_page = st.selectbox(
+                "ページ選択",
+                range(1, total_pages + 1),
+                index=current_page - 1,
+                key=f"page_select_{tab_key}",
+                label_visibility="collapsed"
+            )
+        
+        # ナビゲーションボタン
+        nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns(5)
+        
+        with nav_col1:
+            if st.button("⏮️ 最初", key=f"first_{tab_key}", disabled=(current_page == 1)):
+                new_page = 1
+        
+        with nav_col2:
+            if st.button("◀️ 前", key=f"prev_{tab_key}", disabled=(current_page == 1)):
+                new_page = max(1, current_page - 1)
+        
+        with nav_col4:
+            if st.button("▶️ 次", key=f"next_{tab_key}", disabled=(current_page == total_pages)):
+                new_page = min(total_pages, current_page + 1)
+        
+        with nav_col5:
+            if st.button("⏭️ 最後", key=f"last_{tab_key}", disabled=(current_page == total_pages)):
+                new_page = total_pages
+        
+        return new_page
+    
+    @staticmethod
     def render_results(all_items: List[ComparisonResult], original_columns: List[str], summary: Summary):
         """結果表示"""
         if not all_items:
@@ -444,9 +521,33 @@ class UIRenderer:
                     st.info("該当するアイテムはありません")
                     continue
                 
+                # ページング状態の管理
+                page_key = f"page_{filter_type}"
+                if page_key not in st.session_state:
+                    st.session_state[page_key] = 1
+                
+                # ページング制御
+                current_page = UIRenderer.render_pagination_controls(
+                    len(filtered_items), 
+                    st.session_state[page_key], 
+                    filter_type
+                )
+                
+                # ページが変更された場合は更新
+                if current_page != st.session_state[page_key]:
+                    st.session_state[page_key] = current_page
+                    st.rerun()
+                
+                # 現在ページのアイテムを取得
+                page_items = PaginationUtils.get_page_items(filtered_items, current_page)
+                
+                if not page_items:
+                    st.info("このページには表示するアイテムがありません")
+                    continue
+                
                 # 表示データの準備
                 display_data = []
-                for item in filtered_items:
+                for item in page_items:
                     stock1_display, stock2_display, stock_change_display = StockUtils.format_stock_display(item)
                     
                     row = {
@@ -470,8 +571,9 @@ class UIRenderer:
                     height=min(600, len(df) * 35 + 38)
                 )
                 
-                if filter_type != "all":
-                    st.caption(f"表示中: {len(filtered_items):,} 件")
+                # 現在の表示情報
+                start_item, end_item = PaginationUtils.get_page_range_info(len(filtered_items), current_page)
+                st.caption(f"現在のページ: {start_item:,} - {end_item:,} 件 / 全 {len(filtered_items):,} 件")
 
 class CSVExporter:
     """CSV出力クラス"""
