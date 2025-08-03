@@ -223,7 +223,7 @@ def format_stock_display(item: ComparisonItem) -> Tuple[str, str, str]:
         else:
             change_value = f"{item.stock_change:+.0f}"
             if item.stock_change < 0:
-                # 減少時は赤文字でHTMLタグを追加
+                # 減少時は赤文字
                 stock_change_display = f'<span style="color: red;">{change_value}</span>'
             else:
                 stock_change_display = change_value
@@ -333,7 +333,7 @@ class InventoryComparator:
             return False, f"必須キー列が不足: {missing_keys}"
         
         if self.stock_column not in data1.columns:
-            return False, f"在庫列 '{self.stock_column}' が見つかりません"
+            return False, f"比較列 '{self.stock_column}' が見つかりません"
         
         return True, "OK"
     
